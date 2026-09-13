@@ -6,6 +6,9 @@
  * Správné odpovědi jsou v čistě statické aplikaci dostupné ve zdrojovém kódu.
  * Uzamčení chrání průchod rozhraním, není ověřením identity ani proti podvodu.
  * ===================================================================== */
+// Datum přístupu použité ve výukových příkladech; nemění se podle dne spuštění.
+const EXAMPLE_ACCESS_DATE = "2026-09-13";
+const ACCESS_NOTE = `[citováno ${EXAMPLE_ACCESS_DATE}].`;
 const MATERIAL = {title:"ICT v práci farmaceutického asistenta", url:"https://ucebnaa101.github.io/Ict_ve_farmacii/"};
 const LINKS = {
   sukl:"https://sukl.gov.cz/faq/jak-je-rozdelena-napln-prace-jednotlivych-pracovniku-lekarny/",
@@ -21,10 +24,10 @@ const BOOK_MODELS = {
 };
 const CITATION_OPTIONS = {
   Harvard:[
-    {id:"h-correct",correct:true,cite:"(ICT v práci farmaceutického asistenta, bez data)",record:`ICT v práci farmaceutického asistenta. Bez data. [online]. Dostupné z: ${MATERIAL.url}`},
-    {id:"h-author",correct:false,cite:"(Novák, bez data)",record:`NOVÁK, Jan. Bez data. ICT v práci farmaceutického asistenta. [online]. Dostupné z: ${MATERIAL.url}`},
-    {id:"h-year",correct:false,cite:"(ICT v práci farmaceutického asistenta, 2024)",record:`ICT v práci farmaceutického asistenta. 2024. [online]. Dostupné z: ${MATERIAL.url}`},
-    {id:"h-mismatch",correct:false,cite:"(ICT ve farmacii, bez data)",record:`ICT v práci farmaceutického asistenta. Bez data. [online]. Dostupné z: ${MATERIAL.url}`}
+    {id:"h-correct",correct:true,cite:"(ICT v práci farmaceutického asistenta, bez data)",record:`ICT v práci farmaceutického asistenta. Bez data. Online. Dostupné z: ${MATERIAL.url}. ${ACCESS_NOTE}`},
+    {id:"h-author",correct:false,cite:"(Novák, bez data)",record:`NOVÁK, Jan. Bez data. ICT v práci farmaceutického asistenta. Online. Dostupné z: ${MATERIAL.url}. ${ACCESS_NOTE}`},
+    {id:"h-year",correct:false,cite:"(ICT v práci farmaceutického asistenta, 2024)",record:`ICT v práci farmaceutického asistenta. 2024. Online. Dostupné z: ${MATERIAL.url}. ${ACCESS_NOTE}`},
+    {id:"h-mismatch",correct:false,cite:"(ICT ve farmacii, bez data)",record:`ICT v práci farmaceutického asistenta. Bez data. Online. Dostupné z: ${MATERIAL.url}. ${ACCESS_NOTE}`}
   ],
   APA:[
     {id:"a-correct",correct:true,cite:"(ICT v práci farmaceutického asistenta, n.d.)",record:`ICT v práci farmaceutického asistenta. (n.d.). ${MATERIAL.url}`},
@@ -166,17 +169,17 @@ function commitAnswer(value) {
 /* 5. ZOBRAZENÍ — uživatelská data jsou vždy escapována. */
 function escapeHTML(value) {return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function externalLink(url,label) {return `<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} <span aria-hidden="true">↗</span></a>`;}
-function materialQuote(text) {return `<div class="quote-box"><span class="part-label">Původní text</span><blockquote><em>„${escapeHTML(text)}“</em></blockquote><cite>Zdroj: ${escapeHTML(MATERIAL.title)}${externalLink(MATERIAL.url,MATERIAL.url)}</cite></div>`;}
+function materialQuote(text) {return `<div class="quote-box"><span class="part-label">Původní text</span><blockquote><em>„${escapeHTML(text)}“</em></blockquote><cite>Zdroj: ${escapeHTML(MATERIAL.title)} Online. Dostupné z: ${externalLink(MATERIAL.url,MATERIAL.url)} ${ACCESS_NOTE}</cite></div>`;}
 function errorExample() {
   // Záměrně právě tři chyby: chybí ePoukaz v seznamu, přímá citace není kurzívou,
   // SÚKL je v seznamu navíc. Jde o výukovou ukázku, nikoli vzor správného zápisu.
-  return `<section class="example-text" aria-label="Ukázka odborného textu"><span class="eyebrow">Ukázka k posouzení</span><h2>Elektronické doklady v lékárně</h2><p>„eRecept je lékařský předpis (recept) vystavený v elektronické podobě.“ (ePreskripce – Co je eRecept?, bez data)</p><p>Elektronický poukaz slouží k předepisování zdravotnických prostředků (ePreskripce – Co je ePoukaz?, bez data).</p><h3>Seznam použité literatury</h3><ol><li>ePreskripce – Co je eRecept? Bez data. [online]. Dostupné z: ${externalLink(LINKS.recept,LINKS.recept)}</li><li>Státní ústav pro kontrolu léčiv – Jak je rozdělena náplň práce jednotlivých pracovníků lékárny? Bez data. [online]. Dostupné z: ${externalLink(LINKS.sukl,LINKS.sukl)}</li></ol></section>`;
+  return `<section class="example-text" aria-label="Ukázka odborného textu"><span class="eyebrow">Ukázka k posouzení</span><h2>Elektronické doklady v lékárně</h2><p>„eRecept je lékařský předpis (recept) vystavený v elektronické podobě.“ (ePreskripce – Co je eRecept?, bez data)</p><p>Elektronický poukaz slouží k předepisování zdravotnických prostředků (ePreskripce – Co je ePoukaz?, bez data).</p><h3>Seznam použité literatury</h3><ol><li>ePreskripce – Co je eRecept? Bez data. Online. Dostupné z: ${externalLink(LINKS.recept,LINKS.recept)}. ${ACCESS_NOTE}</li><li>Státní ústav pro kontrolu léčiv – Jak je rozdělena náplň práce jednotlivých pracovníků lékárny? Bez data. Online. Dostupné z: ${externalLink(LINKS.sukl,LINKS.sukl)}. ${ACCESS_NOTE}</li></ol></section>`;
 }
 function feedbackHTML(q,result) {
   let body = "";
   if (q.id === "direct") body = `<p>${escapeHTML(result.correct ? q.feedbackCorrect : q.feedbackWrong)}</p>`;
   if (q.id === "paraphrase") body = `<p>${escapeHTML(q.feedback)}</p>`;
-  if (q.id === "citation") body = `<p>Web neuvádí osobního autora ani datum vydání. Na místě autora proto stojí název dokumentu; ${state.style === "APA" ? "v APA se neznámé datum označuje „n.d.“" : "v použitém zápisu Harvard se uvádí „bez data“"}. Název v odkazu musí jednoznačně odpovídat bibliografickému záznamu. Autora ani rok nelze domýšlet.</p>`;
+  if (q.id === "citation") body = `<p>Web neuvádí osobního autora ani datum vydání. Na místě autora proto stojí název dokumentu; ${state.style === "APA" ? "v APA se neznámé datum označuje „n.d.“" : "v použitém zápisu Harvard se uvádí „bez data“"}. Název v odkazu musí jednoznačně odpovídat bibliografickému záznamu. Autora ani rok nelze domýšlet.${state.style === "Harvard" ? " U online zdroje podle ČSN ISO 690:2022 patří za URL také datum citování ve tvaru [citováno RRRR-MM-DD]. Jde o datum přístupu ke zdroji, nikoli datum jeho vydání." : ""}</p>`;
   if (q.id === "isbn") body = `<p>${escapeHTML(result.reason)}</p>${result.correct ? "" : `<p><strong>Vzorový záznam – ${state.style}</strong></p><p>${escapeHTML(BOOK_MODELS[state.style])}</p>`}`;
   if (q.id === "errors") body = `<p>Skutečné chyby v ukázce:</p><ul><li><strong>Chybějící záznam:</strong> odkaz na „ePreskripce – Co je ePoukaz?“ nemá protějšek v seznamu literatury.</li><li><strong>Chybějící kurzíva:</strong> doslovná věta o eReceptu je v uvozovkách, ale podle metodického manuálu školy má být také kurzívou.</li><li><strong>Nepoužitý zdroj:</strong> záznam SÚKL o pracovnících lékárny není v předloženém textu citován.</li></ul><p>Parafráze nevyžaduje uvozovky. U webové stránky bez stránkování nelze vyžadovat číslo strany. URL patří do bibliografického záznamu; nemusí být přímo v odkazu v textu.</p>`;
   if (q.id === "sources") body = `<p>Označeny měly být Wikipedia, výsledky vyhledávání Seznam.cz a modelový blogový článek.</p><ul><li><strong>Wikipedia:</strong> Může pomoci při základní orientaci v tématu, ale podle metodického manuálu školy není vhodná jako odborný zdroj pro absolventskou práci.</li><li><strong>Seznam.cz:</strong> Vyhledávač lze použít k nalezení odborného zdroje, není však sám původním odborným zdrojem informace.</li><li><strong>Modelový blog:</strong> chybí autor, datum i použité zdroje, takže nelze spolehlivě ověřit původ a aktuálnost tvrzení.</li></ul><p>SÚKL, ePreskripce a Národní centrum elektronického zdravotnictví jsou k uvedenému tématu vhodnými institucionálními zdroji. Ani u nich nezapomínejte ověřovat aktuálnost konkrétní stránky.</p><p>Při výběru zvažujte autora nebo odpovědnou instituci, odbornost, aktuálnost, dohledatelnost informací, použité zdroje a relevanci k tématu. Rozhoduje důvěryhodnost a účel zdroje, nikoli samotné zveřejnění na internetu.</p>`;
