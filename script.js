@@ -114,11 +114,12 @@ function evaluateAnswer(q, answer, style) {
 }
 function totalScore(session) {return Object.values(session.answers).reduce((sum,a) => sum + (a.correct ? 1 : 0),0);}
 
-/* 4. STAV — jediné vyhodnocení, obnova při obnovení karty, žádné tlačítko restart. */
+/* 4. STAV — jediné vyhodnocení odpovědi; nový pokus je dostupný až po dokončení. */
 const STORAGE_KEY = "vosz-ict-correspondence-1-v1";
 let state = null;
 let storageAvailable = true;
 const app = document.getElementById("app");
+const introHTML = app.innerHTML;
 function saveSession() {
   try {sessionStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
   catch (_) {storageAvailable = false;}
@@ -259,8 +260,33 @@ function renderResult() {
   const date = new Intl.DateTimeFormat("cs-CZ",{dateStyle:"long",timeStyle:"short"}).format(new Date(state.completedAt));
   app.innerHTML = `<section class="result"><p class="print-heading">VOŠZ – Informační a komunikační technologie</p><p class="eyebrow">Výsledkový protokol</p><p class="task-number">Korespondenční úkol č. 1</p><h1 id="result-title" tabindex="-1">Práce s odbornými informacemi a citacemi</h1><p class="subtitle">ICT v práci farmaceutického asistenta</p><dl class="result-meta"><div><dt>Student</dt><dd>${escapeHTML(state.name)}</dd></div><div><dt>Zvolený citační styl</dt><dd>${state.style}</dd></div></dl><div class="score-panel"><div><span>Výsledek</span><strong>${score} / 6</strong><span>bodů</span></div><div><span>Úspěšnost</span><strong>${percent} %</strong></div><div class="completion"><strong>Úkol byl dokončen.</strong></div></div><h2>Přehled hodnocení</h2><table class="result-table"><thead><tr><th scope="col">Otázka</th><th scope="col">Získané body</th></tr></thead><tbody>${state.order.map(id => `<tr><td>${escapeHTML(QUESTIONS.find(q => q.id === id).title)}</td><td>${state.answers[id].correct ? 1 : 0} / 1</td></tr>`).join("")}</tbody></table><p class="completion-date">Datum dokončení: <time datetime="${state.completedAt}">${escapeHTML(date)}</time></p><div class="actions"><button class="primary" id="print-result" type="button">Vytisknout / uložit jako PDF</button></div></section>`;
   document.getElementById("print-result").addEventListener("click",() => window.print());
+  const restartButton = document.createElement("button");
+  restartButton.type = "button";
+  restartButton.className = "secondary";
+  restartButton.id = "restart-task";
+  restartButton.textContent = "Spustit nový pokus";
+  const actions = document.querySelector(".result .actions");
+  actions.style.flexWrap = "wrap";
+  const reminder = document.createElement("p");
+  reminder.className = "attempt-note";
+  reminder.style.flexBasis = "100%";
+  reminder.textContent = "Před novým pokusem si uložte výsledkový protokol. Nový pokus vymaže předchozí průběh.";
+  actions.prepend(reminder);
+  actions.append(restartButton);
+  restartButton.addEventListener("click",restartTask);
   document.getElementById("result-title").focus({preventScroll:true});window.scrollTo(0,0);
 }
+// Obnovujeme úvod bez reloadu, aby restart fungoval i bez dostupného úložiště.
+function restartTask() {
+  if (!state || state.index !== 6) return;
+  try {sessionStorage.removeItem(STORAGE_KEY);} catch (_) {storageAvailable = false;}
+  state = null;
+  app.innerHTML = introHTML;
+  bindStartForm();
+  document.getElementById("student-name").focus({preventScroll:true});
+  window.scrollTo(0,0);
+}
+function bindStartForm() {
 document.getElementById("start-form").addEventListener("submit",event => {
   event.preventDefault();
   if (state) return;
@@ -268,5 +294,7 @@ document.getElementById("start-form").addEventListener("submit",event => {
   if (!name) {document.getElementById("name-error").textContent = "Vyplňte prosím jméno a příjmení.";document.getElementById("student-name").focus();return;}
   state = createSession(name);saveSession();renderQuestion();
 });
+}
+bindStartForm();
 state = loadSession();
 if (state) {if (state.index === 6) renderResult();else renderQuestion();}
